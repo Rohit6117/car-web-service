@@ -31,7 +31,8 @@ class UserResponse(UserCreate):
 
 class UserLogin(BaseModel):
     user_email: Optional[str] = None
-    user_password: Optional[str] = None      
-# class Token(BaseModel):
-#     access_token:str
-#     token_type:str
+    user_password: Optional[str] = None 
+    
+class Token(BaseModel):
+    access_token:str
+    token_type:str

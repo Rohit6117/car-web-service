@@ -3,20 +3,23 @@ from fastapi import HTTPException
 from register_page.schema import schema
 from register_page.model import model
 # import auth
-# from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
+from auth import hash_password, verify_password, create_access_token, verify_token
+
 from datetime import datetime
 def create_user(db: Session, user: schema.UserCreate):
     db_user = db.query(model.UserCreate).filter(model.UserCreate.user_email == user.user_email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # hashed_pw=auth.hash_password(user.user_password)
+    hashed_pw= hash_password(user.user_password)
     new_user = model.UserCreate(
         user_name=user.user_name, 
         user_email=user.user_email,
         user_phone=user.user_phone,
         user_package=user.user_package,
-        user_password=user.user_password,
+        # user_password=user.user_password,
+        user_password=hashed_pw,
         created_at= datetime.utcnow(),
         updated_at = None,
         deleted_at= None
@@ -27,13 +30,13 @@ def create_user(db: Session, user: schema.UserCreate):
     # return f"{db_user} UserData Add Successfully.!" 
     return new_user
 
-# def login(form_data: OAuth2PasswordRequestForm, db: Session):
-#     user = db.query(models.UserCreate).filter(models.UserCreate.user_email == form_data.username).first()
-#     if not user or not auth.verify_password(form_data.password, user.user_password):
-#         raise HTTPException(status_code=400, detail="Invalid credentials")
+def login(form_data: OAuth2PasswordRequestForm, db: Session):
+    user = db.query(model.UserCreate).filter(model.UserCreate.user_email == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.user_password):
+        raise HTTPException(status_code=400, detail="Invalid credentials")
 
-#     token = auth.create_access_token(data={"sub": user.user_email})
-#     return {"access_token": token, "token_type": "bearer"}
+    token = create_access_token(data={"sub": user.user_email})
+    return {"access_token": token, "token_type": "bearer"}
 
 # def update_user(token:str,db: Session, user: schemas.UserUpdatedData,user_email:str):
 #     email = auth.verify_token(token)
@@ -85,9 +88,9 @@ def show_user(db: Session, data:schema.UserLogin):
     # return f"{db_user} Data Showing...."
     return db_user
 
-# def me(token: str , db: Session):
-#     email = auth.verify_token(token)
-#     if not email:
-#         raise HTTPException(status_code=401, detail="Invalid token")
-#     user = db.query(models.UserCreate).filter(models.UserCreate.user_email == email).first()
-#     return user
+def me(token: str , db: Session):
+    email = verify_token(token)
+    if not email:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    user = db.query(model.UserCreate).filter(model.UserCreate.user_email == email).first()
+    return user

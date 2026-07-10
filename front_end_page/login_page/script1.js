@@ -88,14 +88,25 @@ document.getElementById("loginForm").addEventListener("submit", async function (
   }
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/user/show", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
+    // const response = await fetch("http://127.0.0.1:8000/login", {
+    // // const response = await fetch("http://127.0.0.1:8000/user/show", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json"
+    //   },
+    //   body: JSON.stringify({
+    //     user_email: email,
+    //     user_password: password
+    //   })
+    // });
+    const response = await fetch("http://127.0.0.1:8000/login",{
+      method:"POST",
+      headers:{
+        "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: JSON.stringify({
-        user_email: email,
-        user_password: password
+      body:new URLSearchParams({
+        username: email,
+        password: password
       })
     });
 
@@ -107,10 +118,50 @@ document.getElementById("loginForm").addEventListener("submit", async function (
     }
 
     // Optional: store user/token
-    localStorage.setItem("user", JSON.stringify(data));
+    // localStorage.setItem("user", JSON.stringify(data));
+
+     // Store JWT token
+
+    localStorage.setItem(
+      "access_token",
+      data.access_token
+    );
+
+
+    localStorage.setItem(
+      "token_type",
+      data.token_type
+    );
+
+    const userResponse = await fetch("http://127.0.0.1:8000/me",{
+        method:"GET",
+        headers:{
+          "Authorization":
+          `Bearer ${data.access_token}`
+        }
+      }
+    );
+
+    const userData = await userResponse.json(); 
+
+    console.log("ME DATA:", userData);
+
+    if(userResponse.ok){
+      // Store user information
+      localStorage.setItem("user", JSON.stringify(userData));
+    }
+    else{
+      alert(
+        userData.detail || "User data not found");
+      return;
+    }
 
     alert("Login successful!");
-    window.location.href = "../index.html"; // redirect after login
+
+    setTimeout(() => {
+      window.location.href = "../index.html";
+    }, 5000);
+    // window.location.href = "../index.html"; // redirect after login
 
   } catch (error) {
     console.error("Login error:", error);
